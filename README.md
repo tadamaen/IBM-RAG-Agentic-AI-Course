@@ -2,7 +2,7 @@
 Contains all the Python code for the labs in the IBM RAG &amp; Agentic AI Course, grouped by course number
 
 
-# Course 2 Project 3: LinkedIn Icebreaker Bot
+## Course 2 Project 3: LinkedIn Icebreaker Bot
 
 An AI-powered tool that generates personalized icebreakers and conversation starters based on LinkedIn profiles. This project uses IBM watsonx.ai and LlamaIndex to create a tool that helps make introductions more personal and engaging.
 
