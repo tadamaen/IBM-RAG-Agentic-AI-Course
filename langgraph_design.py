@@ -317,3 +317,43 @@ def route_investment(state: State, iteration_limit: int = 5):
     else:
         print("→ Routing to: Rejected + Feedback")
         return "Rejected + Feedback"
+
+# Building The Workflow
+optimizer_builder = StateGraph(State)
+
+optimizer_builder.add_node("determine_target_grade", determine_target_grade)
+optimizer_builder.add_node("investment_plan_generator", investment_plan_generator)
+optimizer_builder.add_node("evaluate_plan", evaluate_plan)
+
+optimizer_builder.add_edge(START, "determine_target_grade")
+optimizer_builder.add_edge("determine_target_grade", "investment_plan_generator")
+optimizer_builder.add_edge("investment_plan_generator", "evaluate_plan")
+
+optimizer_builder.add_conditional_edges("evaluate_plan", lambda state: route_investment(state), {"Accepted": END, "Rejected + Feedback": "investment_plan_generator"})
+
+optimizer_workflow = optimizer_builder.compile()
+display(Image(optimizer_workflow.get_graph().draw_mermaid_png()))
+
+# TestingThe Workflow
+state = optimizer_workflow.invoke({
+    "investor_profile": ("Age: 29\n"
+                         "Salary: $110,000\n"
+                         "Assets: $40,000\n"
+                         "Goal: Achieve financial independence by age 45\n"
+                         "Risk tolerance: High")})
+
+def pretty_print_final_state(state: dict):
+    print("🎯 Final Investment Plan Summary\n" + "="*40)
+    print(f"\n📌 Investor Profile:\n{state['investor_profile']}")
+    
+    print("\n📈 Target Risk Grade:", state['target_grade'])
+    print("📊 Final Assigned Grade:", state['grade'])
+    print("🔁 Iterations Taken:", state['n'])
+
+    print("\n📝 Evaluator Feedback:\n" + "-"*30)
+    print(state['feedback'])
+
+    print("\n📃 Final Investment Plan:\n" + "-"*30)
+    print(state['investment_plan'])
+
+pretty_print_final_state(state)
