@@ -12,6 +12,7 @@
 import litellm
 import sys
 import os
+from enum import Enum
 from leftover import LeftoversCrew
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
@@ -19,6 +20,7 @@ from IPython.display import display, JSON, Markdown
 from datetime import datetime
 from crewai_tools import SerperDevTool
 from crewai import Agent, Task, Crew, Process, LLM
+from leftover import LeftoversCrew
 sys.path.append(".")
 files = os.listdir('.')
 litellm.ssl_verify = False
@@ -170,3 +172,116 @@ budget_task = Task(description = ("Analyze the shopping plan for '{meal_name}' s
                    agent = budget_advisor,
                    context = [meal_planning_task, shopping_task],
                    output_file = "shopping_guide.md")
+
+
+# Agent 4: Food Leftover Agent
+# PLEASE REFER TO THE LEFTOVER.PY FILE FOR THE CODE 
+leftovers_cb = LeftoversCrew(llm = llm)
+yaml_leftover_manager = leftovers_cb.leftover_manager()
+yaml_leftover_task = leftovers_cb.leftover_task()
+
+# Agent 5: Summary And Task Agent (responsible for gathering all the content and create a detailed summary)
+summary_agent = Agent(role = "Report Compiler",
+                      goal = "Compile comprehensive meal planning reports from all team outputs",
+                      backstory = "A skilled coordinator who organizes information from multiple specialists into comprehensive, easy-to-follow reports.",
+                      tools = [],
+                      llm = llm,
+                      verbose = False)
+
+summary_task = Task(description = ("Compile a comprehensive meal planning report that includes:\n"
+                                   "1. The complete recipe and cooking instructions from the meal planner\n"
+                                   "2. The organized shopping list with prices from the shopping organizer\n"
+                                   "3. The budget analysis and money-saving tips from the budget advisor\n"
+                                   "4. The leftover management suggestions from the waste reduction specialist\n"
+                                   "Format this as a complete, user-friendly meal planning guide."),
+                    expected_output = "A comprehensive meal planning guide that combines all team outputs into one cohesive report.",
+                    agent = summary_agent,
+                    context = [meal_planning_task, shopping_task, budget_task, yaml_leftover_task])
+
+# Assembling The Complete Grocery Planning Team
+complete_grocery_crew = Crew(agents = [meal_planner, shopping_organizer, budget_advisor, yaml_leftover_manager, summary_agent],
+                             tasks = [meal_planning_task, shopping_task, budget_task, yaml_leftover_task, summary_task],
+                             process = Process.sequential,
+                             verbose = True)
+
+# Run the complete crew
+complete_result = complete_grocery_crew.kickoff(inputs = {"meal_name": "Chicken Stir Fry",
+                                                          "servings": 4,
+                                                          "budget": "$25",
+                                                          "dietary_restrictions": ["no nuts", "low sodium"],
+                                                          "cooking_skill": "beginner"})
+
+print("✅ Complete meal planning with summary completed!")
+print("📋 Complete Results:")
+print(complete_result)
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# EXERCISES: 
+# Exercise 1 - Create a Specialized Dietary Agent (specializes in dietary analysis and nutritional recommendations)
+nutrition_analyst = Agent(role = "Nutrition Analyst & Health Advisor",
+                          goal = "Analyze meal nutritional content and provide healthy recommendations",
+                          backstory = "A certified nutritionist who evaluates meals for nutritional balance, calorie content, and health optimization while respecting dietary restrictions.",
+                          tools = [SerperDevTool()],
+                          llm = llm,
+                          verbose = False)
+
+nutrition_task = Task(description = ("Analyze the nutritional content of the '{meal_name}' meal plan for {servings} people. "
+                                     "Calculate approximate calories, protein, carbs, and fats. Consider dietary restrictions: {dietary_restrictions}. "
+                                     "Provide healthy alternatives if the meal could be more nutritious while staying within {budget}."),
+                      expected_output = "Nutritional analysis with calorie estimates, macronutrient breakdown, and healthy improvement suggestions.",
+                      agent = nutrition_analyst,
+                      context = [meal_planning_task, shopping_task, budget_task],
+                      output_file = "nutrition_analysis.md")
+
+health_focused_crew = Crew(agents = [meal_planner, shopping_organizer, budget_advisor, nutrition_analyst, yaml_leftover_manager, summary_agent],
+                           tasks = [meal_planning_task, shopping_task, budget_task, nutrition_task, yaml_leftover_task, summary_task],
+                           process = Process.sequential,
+                           verbose = True)
+
+result = health_focused_crew.kickoff(inputs = {"meal_name": "Quinoa Buddha Bowl",
+                                               "servings": 2,
+                                               "budget": "$20",
+                                               "dietary_restrictions": ["vegetarian", "high protein"],
+                                               "cooking_skill": "intermediate"})
+
+# Exercise 2 - Extend Pydantic Models for Weekly Planning (handle weekly meal planning instead of single meals)
+class MealType(str, Enum):
+    BREAKFAST = "breakfast"
+    LUNCH = "lunch" 
+    DINNER = "dinner"
+    SNACK = "snack"
+
+class DailyMeals(BaseModel):
+    """Meals for one day"""
+    date: str = Field(description = "Date in YYYY-MM-DD format")
+    breakfast: Optional[MealPlan] = Field(default = None, description = "Breakfast meal plan")
+    lunch: Optional[MealPlan] = Field(default = None, description = "Lunch meal plan") 
+    dinner: Optional[MealPlan] = Field(default = None, description = "Dinner meal plan")
+    snacks: Optional[List[MealPlan]] = Field(default = None, description = "Snack meal plans")
+    
+class WeeklyMealPlan(BaseModel):
+    """Complete weekly meal planning"""
+    week_start_date: str = Field(description = "Start date of the week")
+    daily_meals: List[DailyMeals] = Field(description = "Meals for each day")
+    weekly_themes: List[str] = Field(description = "Cooking themes for the week")
+    prep_suggestions: List[str] = Field(description = "Meal prep recommendations")
+
+class WeeklyGroceryPlan(BaseModel):
+    """Weekly grocery shopping strategy"""
+    weekly_budget: str = Field(description = "Total weekly budget")
+    meal_plans: List[DailyMeals] = Field(description = "All weekly meals")
+    shopping_sections: List[ShoppingCategory] = Field(description = "Organized by store sections")
+    bulk_items: List[GroceryItem] = Field(description = "Items to buy in bulk")
+    shopping_tips: List[str] = Field(description = "Weekly shopping efficiency tips")
+    budget_breakdown: Dict[str, str] = Field(description = "Daily budget allocation")
+
+# Test the models
+sample_weekly_plan = WeeklyMealPlan(week_start_date = "2024-01-15",
+                                    daily_meals = [DailyMeals(date = "2024-01-15",
+                                                              breakfast = MealPlan(meal_name = "Oatmeal", difficulty_level = "Easy", servings = 2, researched_ingredients = ["oats", "milk", "berries"]),
+                                                              lunch = MealPlan(meal_name = "Salad", difficulty_level = "Easy", servings = 2, researched_ingredients = ["lettuce", "tomatoes", "dressing"]),
+                                                              dinner = MealPlan(meal_name = "Pasta", difficulty_level = "Medium", servings = 2, researched_ingredients = ["pasta", "sauce", "cheese"]))],
+                                    weekly_themes = ["Italian Monday", "Taco Tuesday"],
+                                    prep_suggestions = ["Wash vegetables on Sunday", "Cook grains in bulk"])
+
+display(JSON(sample_weekly_plan.model_dump()))
