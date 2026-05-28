@@ -90,3 +90,23 @@ print(f"Total tokens used: {token_count}")
 print(f"Prompt tokens: {prompt_tokens} (used for instructions to the model)")
 print(f"Completion tokens: {completion_tokens} (generated in response)")
 print("We can get the agent for the writer task: ",tasks_outputs[1].agent)
+
+# Exercise: Create a Social Media Strategist Agent
+social_agent = Agent(role = 'Social Media Strategist',
+                     goal = 'Generate engaging social media snippets based on the full article',
+                     backstory = "A digital storyteller who excels at crafting compelling posts to drive engagement and traffic.",
+                     verbose = True)
+
+# Defining a Social Media Strategy Task
+social_task = Task(description = ("Summarize the blog post about {topic} into 2–3 engaging social media posts "
+                                  "suitable for platforms like LinkedIn or Twitter. Make sure the tone is informative, "
+                                  "professional, and encourages further reading."),
+                   agent = social_agent,
+                   expected_output = "A series of 2–3 well-written social posts highlighting the key insights from the blog content.")
+
+# Create A Complete Crew Object
+crew = Crew(agents = [research_agent, writer_agent, social_agent],
+            tasks = [research_task, writer_task, social_task],
+            process=Process.sequential,
+            verbose = True)
+result = crew.kickoff(inputs = {"topic": "Latest Generative AI breakthroughs"})
