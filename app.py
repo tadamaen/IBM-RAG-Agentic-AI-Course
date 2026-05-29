@@ -123,92 +123,70 @@ def analyze_food(image, dietary_restrictions, workflow_type, progress = gr.Progr
         nutrient_markdown = format_analysis_output(final_output)
         return nutrient_markdown
     
-# Define custom CSS for styling
-css = """
-.title {font-size: 1.5em !important; 
-        text-align: center !important;
-        color: #FFD700;}
+# Define custom CSS for styling [OPTIONAL]
+css = """.title {font-size: 1.5em !important; 
+         text-align: center !important;
+         color: #FFD700;}
+         .text {text-align: center;}"""
 
-.text {text-align: center;}
-"""
+js = """function createGradioAnimation() {
+        var container = document.createElement('div');
+        container.id = 'gradio-animation';
+        container.style.fontSize = '2em';
+        container.style.fontWeight = 'bold';
+        container.style.textAlign = 'center';
+        container.style.marginBottom = '20px';
+        container.style.color = '#eba93f';
 
-js = """
-function createGradioAnimation() {
-    var container = document.createElement('div');
-    container.id = 'gradio-animation';
-    container.style.fontSize = '2em';
-    container.style.fontWeight = 'bold';
-    container.style.textAlign = 'center';
-    container.style.marginBottom = '20px';
-    container.style.color = '#eba93f';
-
-    var text = 'Welcome to your AI NourishBot!';
-    for (var i = 0; i < text.length; i++) {
-        (function(i){
-            setTimeout(function(){
-                var letter = document.createElement('span');
-                letter.style.opacity = '0';
-                letter.style.transition = 'opacity 0.1s';
-                letter.innerText = text[i];
-
-                container.appendChild(letter);
+        var text = 'Welcome to your AI NourishBot!';
+        for (var i = 0; i < text.length; i++) {
+            (function(i){
+                setTimeout(function(){
+                    var letter = document.createElement('span');
+                    letter.style.opacity = '0';
+                    letter.style.transition = 'opacity 0.1s';
+                    letter.innerText = text[i];
+                    container.appendChild(letter);
 
                 setTimeout(function() {
-                    letter.style.opacity = '0.9';
-                }, 50);
-            }, i * 250);
-        })(i);
-    }
+                    letter.style.opacity = '0.9';}, 50);}, i * 250);})(i);}
 
-    var gradioContainer = document.querySelector('.gradio-container');
-    gradioContainer.insertBefore(container, gradioContainer.firstChild);
+        var gradioContainer = document.querySelector('.gradio-container');
+        gradioContainer.insertBefore(container, gradioContainer.firstChild);
+    
+        return 'Animation created';}"""
 
-    return 'Animation created';
-}
-"""
 # Use a theme and custom CSS with Blocks
-with gr.Blocks(theme=gr.themes.Citrus(), css=css, js=js) as demo:
-    gr.Markdown("# How it works", elem_classes="title")
-    gr.Markdown("Upload an image of your fridge content, enter your dietary restriction (if you have any!) and select a workflow type 'recipe' then click 'Analyze' to get recipe ideas.", elem_classes="text")
-    gr.Markdown("Upload an image of a complete dish, leave dietary restriction blank and select a workflow type 'analysis' then click 'Analyze' to get nutritional insights.", elem_classes="text")
-    gr.Markdown("You can also select one of the examples provided to autofill the input sections and click 'Analyze' right away!", elem_classes="text")
+with gr.Blocks(theme = gr.themes.Citrus(), css = css, js = js) as demo:
+     gr.Markdown("# How it works", elem_classes="title")
+     gr.Markdown("Upload an image of your fridge content, enter your dietary restriction (if you have any!) and select a workflow type 'recipe' then click 'Analyze' to get recipe ideas.", elem_classes = "text")
+     gr.Markdown("Upload an image of a complete dish, leave dietary restriction blank and select a workflow type 'analysis' then click 'Analyze' to get nutritional insights.", elem_classes = "text")
+     gr.Markdown("You can also select one of the examples provided to autofill the input sections and click 'Analyze' right away!", elem_classes = "text")
 
-    with gr.Row():
-        with gr.Column(scale=1, min_width=400):
-            gr.Markdown("## Inputs", elem_classes="title")
-            image_input = gr.Image(type="pil", label="Upload Image")
-            dietary_input = gr.Textbox(label="Dietary Restrictions (optional)", placeholder="e.g., vegan")
-            workflow_radio = gr.Radio(["recipe", "analysis"], label="Workflow Type")
-            submit_btn = gr.Button("Analyze")
+     with gr.Row():
+         with gr.Column(scale = 1, min_width = 400):
+             gr.Markdown("## Inputs", elem_classes = "title")
+             image_input = gr.Image(type = "pil", label = "Upload Image")
+             dietary_input = gr.Textbox(label = "Dietary Restrictions (optional)", placeholder = "e.g., vegan")
+             workflow_radio = gr.Radio(["recipe", "analysis"], label = "Workflow Type")
+             submit_btn = gr.Button("Analyze")
         
-        with gr.Column(scale=2, min_width=600):
-            # Place Examples directly under the Analyze button
-            gr.Examples(
-                examples=[
-                    ["examples/food-1.jpg", "vegan", "recipe"],
-                    ["examples/food-2.jpg", "", "analysis"],
-                    ["examples/food-3.jpg", "keto", "recipe"],
-                    ["examples/food-4.jpg", "", "analysis"],
-                ],
-                inputs=[image_input, dietary_input, workflow_radio],
-                label="Try an Example: Select one of the examples below to autofill the input section then click Analyze"
-                # No function or outputs provided, so it only autofills inputs
-            )
-            gr.Markdown("## Results will appear here...", elem_classes="title")
-            # result_display = gr.Markdown(height=800, )
-            result_display = gr.Markdown(
-                "<div style='border: 1px solid #ccc; "
-                "padding: 1rem; text-align: center; "
-                "color: #666;'>No results yet</div>",
-                height=500
-            )
+         with gr.Column(scale = 2, min_width = 600):
+             gr.Examples(examples = [["examples/food-1.jpg", "vegan", "recipe"],
+                                     ["examples/food-2.jpg", "", "analysis"],
+                                     ["examples/food-3.jpg", "keto", "recipe"],
+                                     ["examples/food-4.jpg", "", "analysis"]],
+                         inputs = [image_input, dietary_input, workflow_radio],
+                         label = "Try an Example: Select one of the examples below to autofill the input section then click Analyze")
+             gr.Markdown("## Results will appear here...", elem_classes = "title")
+             result_display = gr.Markdown("<div style='border: 1px solid #ccc; "
+                                          "padding: 1rem; text-align: center; "
+                                          "color: #666;'>No results yet</div>",
+                                          height = 500)
 
-    submit_btn.click(
-        fn=analyze_food,
-        inputs=[image_input, dietary_input, workflow_radio],
-        outputs=result_display
-    )
+    submit_btn.click(fn = analyze_food,
+                     inputs = [image_input, dietary_input, workflow_radio],
+                     outputs = result_display)
 
-# Launch the Gradio interface
 if __name__ == "__main__":
     demo.launch(server_name="127.0.0.1", server_port=5000)
