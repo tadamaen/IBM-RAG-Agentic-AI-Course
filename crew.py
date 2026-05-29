@@ -125,3 +125,9 @@ class NourishBotAnalysisCrew(BaseNourishBotCrew):
         tasks = [self.nutrient_analysis_task()]
         agents = [self.nutrient_analysis_agent()]
         return Crew(agents = agents, tasks = tasks, process = Process.sequential, verbose = True)
+
+# WHEN RUNNING THE APPLICATION
+# git reset --hard
+# git checkout 5-final
+# git pull
+# python app.py
