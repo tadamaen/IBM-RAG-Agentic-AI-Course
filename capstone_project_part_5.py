@@ -157,9 +157,9 @@ else:
     
 print("✅ Demo 2 complete")
 
-# ================================
+# ==============================================
 # Demo 3 — Image similarity search (image→image)
-# ================================
+# ==============================================
 
 meta_all = image_db._collection.get(include=["metadatas"])["metadatas"]
 
